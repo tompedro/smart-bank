@@ -1,0 +1,23 @@
+{
+  "name": "bank",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tompedro/smart-bank.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tompedro/smart-bank/issues"
+  },
+  "homepage": "https://github.com/tompedro/smart-bank#readme",
+  "dependencies": {
+    "csv": "^6.0.4",
+    "express": "^4.17.1"
+  }
+}
