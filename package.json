@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npm start"
+    "compile:definition": "npm_scripts/compile-definition.js",
+    "compile:docs": "npm run compile:definition && node_modules/redoc-cli/index.js bundle build/openapi/definition.json --output ./build/api-docs.html",
+    "dev": "npm run start"
   },
   "repository": {
     "type": "git",
@@ -18,6 +20,7 @@
   "homepage": "https://github.com/tompedro/smart-bank#readme",
   "dependencies": {
     "csv": "^6.0.4",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "openapi": "^1.0.1"
   }
 }
