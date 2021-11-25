@@ -8,6 +8,8 @@ const { createHmac } = require("crypto")
 const secret = process.env.AUTH_JWT_PRIVATE_KEY || "12jiowfcmqd2093eswedfgtr54eswe3454erdsdc"
 const expiresIn = process.env.AUTH_JWT_EXPIRES_IN || "4h"
 const pepper = process.env.pepper || "KSJDFHJSKDHFJS238U48U8DJAJSD"
+const csv = require('csv-parser')
+const fs = require('fs')
 
 const getPasswordHmac = (password, pepper) => {
   return createHmac("sha256", pepper)
@@ -55,43 +57,39 @@ e.logIn = async({ body: { email, password } }, res) => {
 }
 
 e.signUp = async({ body }, res) => {
-  let query = "INSERT INTO users "
-  const finalFields = []
-  const values = []
   try {
-    "firstName, lastName, email, password, gender, class, status".split(", ")
-      .forEach(field => {
-        finalFields.push(field)
-        if (body[field]) {
-          values.push(body[field])
-        } else {
-          if (field == "gender") {
-            values.push(body.sex)
-          } else if (field == "class") {
-            values.push("Studente")
-          } else if (field == "status") {
-            values.push("Unverified")
-          }
-        }
+    let pins = []
+
+    fs.createReadStream('../csv/users.csv')
+      .pipe(csv())
+      .on('data', (row) => {
+        pins.push(row.pin)
       })
+      .on('end', () => {
+        let genP = Math.floor(Math.random() * 1000)
+        let c = true
 
-    query += "(" + finalFields.join(" , ") + ") VALUES (?,?,?,?,?,?,?);"
+        while(c){
+          c = false
+          pins.forEach(p => {
+            if(p === genP) c = true
+          })
+        }
+
+        //GENP E' IL PIN GENERATO, va inserito anche nell'openapi
+        
+      })
     try {
-      const [{ affectedRows, insertId }] = await pool.promise().query(query, values)
 
-      if (affectedRows) {
-        res.status(200).send({
-          JWT: jwt.sign({ id: insertId, email: body.email, role: 1 }, secret, { algorithm: "HS512", expiresIn: "24h" })
-        })
-      } else {
-        res.error(new CodedError("SIGN UP FAILED", ErrorCodes.SQL_ERROR), 500)
-      }
+      res.status(200).send({
+        JWT: jwt.sign({ id: insertId, email: body.email, role: 1 }, secret, { algorithm: "HS512", expiresIn: "24h" })
+      })
 
     } catch (err) {
       res.error(new CodedError(err.message, ErrorCodes.SQL_ERROR), 500)
     }
   } catch (err) {
-    res.error(new CodedError(err.message, ErrorCodes.SQL_ERROR), 500)
+    res.error(new CodedError(err.message, ErrorCodes.FS_ERROR), 500)
   }
 
 }

@@ -11,7 +11,8 @@ e.ErrorCodes = [
   "FORBIDDEN",
   "INVALID_JWT",
   "STRIPE_ERROR",
-  "PAYPAL_ERROR"
+  "PAYPAL_ERROR",
+  "FS_ERROR"
 ].reduce((acc, e) => {
   acc[e] = e
   return acc

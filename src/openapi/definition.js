@@ -161,7 +161,14 @@ module.exports = {
           content: {
             "application/json": {
               schema: {
-                $ref: "#/components/schemas/user"
+                type: "object",
+                properties: {
+                  firstName: { $ref: "#/components/schemas/firstName" },
+                  lastName: { $ref: "#/components/schemas/lastName" },
+                  account: { $ref: "#/components/schemas/account" }
+                },
+                additionalProperties: false,
+                required: ["firstName","lastName","account"]
               },
               examples: {
                 signUp: {
@@ -169,8 +176,7 @@ module.exports = {
                   value: {
                     firstName: "Tommaso",
                     lastName: "Rossi",
-                    account: "102309",
-                    pin: "102"
+                    account: "102309"
                   }
                 }
               }

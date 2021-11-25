@@ -20,6 +20,7 @@
   "homepage": "https://github.com/tompedro/smart-bank#readme",
   "dependencies": {
     "csv": "^6.0.4",
+    "csv-parser": "^3.0.0",
     "express": "^4.17.1",
     "openapi": "^1.0.1"
   }
