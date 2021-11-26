@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken")
 const debug = require("debug")("api")
 const bcrypt = require("bcryptjs")
 const { createHmac } = require("crypto")
-const secret = process.env.AUTH_JWT_PRIVATE_KEY || "12jiowfcmqd2093eswedfgtr54eswe3454erdsdc"
+const secret = "12jiowfcmqd2093eswedfgtr54eswe3454erdsdc"
 const expiresIn = process.env.AUTH_JWT_EXPIRES_IN || "4h"
 const pepper = process.env.pepper || "KSJDFHJSKDHFJS238U48U8DJAJSD"
 const csv = require('csv-parser')
@@ -17,52 +17,48 @@ const getPasswordHmac = (password, pepper) => {
     .digest("hex")
 }
 
-e.logIn = async({ body: { email, password } }, res) => {
-  const query =
-      `SELECT
-        JSON_OBJECT (
-            'userId', id,
-            'email', email,
-            'password', password
-        ) AS data
-        FROM users
-        WHERE email = ? AND status = 'Verified';`
+const createCsvWriter = require('csv-writer').createObjectCsvWriter
+const csvWriter = createCsvWriter({
+  path: './csv/users.csv',
+  header: [
+    {id: 'id', title: 'id'},
+    {id: 'firstName', title: 'firstName'},
+    {id: 'lastName', title: 'lastName'},
+    {id: 'account', title: 'account'},
+    {id: 'pin', title: 'pin'},
+  ]
+})
 
-  if (!email || !password) {
-    return res.error(new CodedError("Check email or password", ErrorCodes.BAD_REQUEST), 400)
-  }
 
-  try {
-    const [[data]] = await pool.promise().query(query, [email])
-
-    if (data) {
-      const { userId, email, password: passwordDB } = data.data
-
-      if (bcrypt.compareSync(getPasswordHmac(password, pepper), passwordDB)) {
-        const JWT = jwt.sign(
-          { id: userId, email, role: 1 },
-          secret,
-          { algorithm: "HS512", expiresIn }
-        )
-        res.json({ JWT })
-      } else {
-        res.error(new CodedError("Check email and password", ErrorCodes.UNAUTHORIZED), 401)
-      }
-    } else {
-      res.error(new CodedError("Check email and password", ErrorCodes.UNAUTHORIZED), 401)
-    }
-  } catch (err) {
-    res.error(new CodedError(err.message, ErrorCodes.SQL_ERROR), 500)
+e.logIn = async({ body: { account, pin } }, res) => {
+  try{
+    fs.createReadStream('./csv/users.csv')
+      .pipe(csv())
+      .on('data', (row) => {
+        if(account == row.account && pin == row.pin){
+          res.status(200).send({
+            JWT: jwt.sign({ id: row.id, account: row.account, role: 1 }, secret, { algorithm: "HS512", expiresIn: "24h" }),
+          })
+        }
+      })
+      .on('end', () => {
+        res.status(500)
+      })
+  } catch(err){
+    res.error(new CodedError(err.message, ErrorCodes.FS_ERROR), 500)
   }
 }
 
-e.signUp = async({ body }, res) => {
+e.signUp = async({ body, body: { firstName, lastName, account } }, res) => {
   try {
     let pins = []
 
-    fs.createReadStream('../csv/users.csv')
+    fs.createReadStream('./csv/users.csv')
       .pipe(csv())
       .on('data', (row) => {
+        if(row.account == account){
+          throw new Error("già esistente")
+        }
         pins.push(row.pin)
       })
       .on('end', () => {
@@ -76,18 +72,19 @@ e.signUp = async({ body }, res) => {
           })
         }
 
-        //GENP E' IL PIN GENERATO, va inserito anche nell'openapi
+        const data = [{ id: pins.length+1, firstName, lastName, account, pin: genP }]
+
+        csvWriter
+        .writeRecords(data)
+        .then(()=> console.log('The CSV file was written successfully'))
+
+
+        res.status(200).send({
+          JWT: jwt.sign({ id: pins.length+1, account: body.account, role: 1 }, secret, { algorithm: "HS512", expiresIn: "24h" }),
+          pin: genP.toString()
+        })
         
       })
-    try {
-
-      res.status(200).send({
-        JWT: jwt.sign({ id: insertId, email: body.email, role: 1 }, secret, { algorithm: "HS512", expiresIn: "24h" })
-      })
-
-    } catch (err) {
-      res.error(new CodedError(err.message, ErrorCodes.SQL_ERROR), 500)
-    }
   } catch (err) {
     res.error(new CodedError(err.message, ErrorCodes.FS_ERROR), 500)
   }

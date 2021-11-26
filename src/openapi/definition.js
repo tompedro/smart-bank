@@ -191,12 +191,14 @@ module.exports = {
                 schema: {
                   type: "object",
                   properties: {
-                    JWT: { $ref: "#/components/schemas/JWT" }
+                    JWT: { $ref: "#/components/schemas/JWT" },
+                    pin: { $ref: "#/components/schemas/pin" }
                   },
-                  required: ["JWT"],
+                  required: ["JWT","pin"],
                   additionalProperties: false,
                   example: {
-                    JWT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                    JWT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+                    pin: "843"
                   }
                 }
               }
@@ -452,7 +454,7 @@ module.exports = {
         example: "2022-01-01T00:00:00Z"
       },
 
-      name: {
+      firstName: {
         type: "string"
       },
 
@@ -484,7 +486,7 @@ module.exports = {
           },
 
           firstName: {
-            $ref: "#/components/schemas/name"
+            $ref: "#/components/schemas/firstName"
           },
 
           lastName: {

@@ -59,6 +59,9 @@ e.handleError = (err, res) => {
     case e.ErrorCodes.STRIPE_ERROR: {
       return res.error(err, 500)
     }
+    case e.ErrorCodes.FS_ERROR: {
+      return res.error(err, 500)
+    }
     case e.ErrorCodes.PAYPAL_ERROR: {
       return res.error(err, 500)
     }

@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile:definition": "npm_scripts/compile-definition.js",
-    "compile:docs": "npm run compile:definition && node_modules/redoc-cli/index.js bundle build/openapi/definition.json --output ./build/api-docs.html",
-    "dev": "npm run start"
+    "compile:definition": "node npm_scripts/compile-definition.js",
+    "compile:docs": "npm run compile:definition && node node_modules/redoc-cli/index.js bundle build/openapi/definition.json --output ./build/api-docs.html",
+    "dev": "npm run start",
+    "start": "node ./src/index.js"
   },
   "repository": {
     "type": "git",
@@ -19,9 +20,22 @@
   },
   "homepage": "https://github.com/tompedro/smart-bank#readme",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "csv": "^6.0.4",
     "csv-parser": "^3.0.0",
+    "csv-writer": "^1.6.0",
+    "debug": "^4.1.1",
     "express": "^4.17.1",
-    "openapi": "^1.0.1"
+    "express-openapi": "^9.3.1",
+    "jsonwebtoken": "^8.5.1",
+    "mysql2": "^2.1.0",
+    "node-fetch": "^2.6.0",
+    "openapi": "^1.0.1",
+    "pm2": "^4.4.0",
+    "redoc-cli": "^0.9.8",
+    "stripe": "^8.84.0"
   }
 }
