@@ -1,21 +1,13 @@
 /* eslint-disable eqeqeq */
 const e = module.exports
-const { pool, CodedError, ErrorCodes } = require("../utils.js")
+const { CodedError, ErrorCodes } = require("../utils.js")
 const jwt = require("jsonwebtoken")
-const debug = require("debug")("api")
-const bcrypt = require("bcryptjs")
 const { createHmac } = require("crypto")
 const secret = "12jiowfcmqd2093eswedfgtr54eswe3454erdsdc"
 const expiresIn = process.env.AUTH_JWT_EXPIRES_IN || "4h"
 const pepper = process.env.pepper || "KSJDFHJSKDHFJS238U48U8DJAJSD"
 const csv = require('csv-parser')
 const fs = require('fs')
-
-const getPasswordHmac = (password, pepper) => {
-  return createHmac("sha256", pepper)
-    .update(password)
-    .digest("hex")
-}
 
 const createCsvWriter = require('csv-writer').createObjectCsvWriter
 const csvWriter = createCsvWriter({
@@ -26,6 +18,15 @@ const csvWriter = createCsvWriter({
     {id: 'lastName', title: 'lastName'},
     {id: 'account', title: 'account'},
     {id: 'pin', title: 'pin'},
+  ]
+})
+
+const csvWriterBalance = createCsvWriter({
+  path: './csv/balances.csv',
+  header: [
+    {id: 'id', title: 'id'},
+    {id: 'userId', title: 'userId'},
+    {id: 'balance', title: 'balance'}
   ]
 })
 
@@ -76,14 +77,20 @@ e.signUp = async({ body, body: { firstName, lastName, account } }, res) => {
 
         csvWriter
         .writeRecords(data)
-        .then(()=> console.log('The CSV file was written successfully'))
+        .then(()=> {
+          console.log('The CSV file was written successfully')
 
+          csvWriterBalance
+          .writeRecords([{id: pins.length+1, userId: pins.length+1, balance: 0}])
+          .then(()=> {
+            console.log('The CSV file was written successfully 2')
 
-        res.status(200).send({
-          JWT: jwt.sign({ id: pins.length+1, account: body.account, role: 1 }, secret, { algorithm: "HS512", expiresIn: "24h" }),
-          pin: genP.toString()
+            res.status(200).send({
+              JWT: jwt.sign({ id: pins.length+1, account: body.account, role: 1 }, secret, { algorithm: "HS512", expiresIn: "24h" }),
+              pin: genP.toString()
+            })
+          })
         })
-        
       })
   } catch (err) {
     res.error(new CodedError(err.message, ErrorCodes.FS_ERROR), 500)
@@ -92,34 +99,30 @@ e.signUp = async({ body, body: { firstName, lastName, account } }, res) => {
 }
 
 e.getInfo = async({ user: { id, role }, body, body: { userId } }, res) => {
-  const query = `SELECT
-                      JSON_OBJECT(
-                          'firstName', firstName,
-                          'lastName', lastName,
-                          'class', class,
-                          'pic', pic,
-                          'bio', bio
-                      ) as data
-                  FROM users WHERE id = ?;`
-
-  if (id !== userId && role < 420) {
-    return res.error(new CodedError("You cannot access this resource", ErrorCodes.FORBIDDEN), 403)
-  }
-
   try {
-    const [data] = (await pool.promise().query(query, [id]))[0]
-    if (data) {
-      const d = {}
-      for (const key in data.data) {
-        if (data.data[key]) {
-          d[key] = data.data[key]
+    let user
+    fs.createReadStream('./csv/users.csv')
+      .pipe(csv())
+      .on('data', ({id: rowId, firstName, lastName, account}) => {
+        if(rowId == id){
+          user = { id: parseInt(rowId), firstName, lastName, account }
+
+          fs.createReadStream('./csv/balances.csv')
+            .pipe(csv())
+            .on('data', ({userId, balance}) => {
+              if(userId == id){
+                res.status(200).send({user: { ...user, balance: parseInt(balance)} })
+              }
+            })
+            .on('end', () => {
+              res.status(500)
+            })
         }
-      }
-      res.json(d)
-    } else {
-      res.error(new CodedError("Not Found", ErrorCodes.NOT_FOUND), 404)
-    }
+      })
+    
+    
+      
   } catch (err) {
-    res.error(new CodedError(err.message, ErrorCodes.SQL_ERROR), 500)
+    res.error(new CodedError(err.message, ErrorCodes.FS_ERROR), 500)
   }
 }

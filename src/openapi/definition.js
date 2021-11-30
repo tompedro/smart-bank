@@ -250,7 +250,15 @@ module.exports = {
             content: {
               "application/json": {
                 schema: {
-                  $ref: "#/components/schemas/user"
+                  type: "object",
+                  properties: {
+                    user:{
+                      $ref: "#/components/schemas/user"
+                    }
+                  },
+                  additionalProperties: false,
+                  required: ["user"]
+                  
                 }
               }
             }
@@ -342,19 +350,19 @@ module.exports = {
                   userId: {
                     type: "integer"
                   },
-                  value: {
+                  amount: {
                     $ref: "#/components/schemas/value"
                   }
                 },
                 additionalProperties: false,
-                required: ["userId", "value"]
+                required: ["userId", "amount"]
               },
               examples: {
                 getQuestion: {
                   summary: "change balance",
                   value: {
                     userId: 2,
-                    value: 3
+                    amount: 3
                   }
                 }
               }
