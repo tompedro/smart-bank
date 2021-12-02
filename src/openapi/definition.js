@@ -294,7 +294,7 @@ module.exports = {
                 required: ["userId"]
               },
               examples: {
-                getQuestion: {
+                getTransaction: {
                   summary: "get a transaction",
                   value: {
                     userId: 2
@@ -321,7 +321,7 @@ module.exports = {
                     }
                   },
                   additionalProperties: false,
-                  required: ["question"]
+                  required: ["transactions"]
                 }
               }
             }
@@ -358,7 +358,7 @@ module.exports = {
                 required: ["userId", "amount"]
               },
               examples: {
-                getQuestion: {
+                operate: {
                   summary: "change balance",
                   value: {
                     userId: 2,
@@ -525,16 +525,16 @@ module.exports = {
             $ref: "#/components/schemas/id"
           },
 
-          account: {
-            $ref: "#/components/schemas/account"
-          },
-
           value: {
             $ref: "#/components/schemas/value"
+          },
+
+          timestamp: {
+            $ref: "#/components/schemas/dateTime"
           }
 
         },
-        required: ["value", "account"],
+        required: ["value"],
         additionalProperties: false
       },
 

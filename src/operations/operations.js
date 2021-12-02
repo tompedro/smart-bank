@@ -4,7 +4,6 @@ const jwt = require("jsonwebtoken")
 const { createHmac } = require("crypto")
 const secret = "12jiowfcmqd2093eswedfgtr54eswe3454erdsdc"
 const expiresIn = process.env.AUTH_JWT_EXPIRES_IN || "4h"
-const pepper = process.env.pepper || "KSJDFHJSKDHFJS238U48U8DJAJSD"
 const csv = require('csv-parser')
 const fs = require('fs')
 
@@ -40,15 +39,30 @@ const csvWriterTransactions = createCsvWriter({
     ]
 })
 
-e.getTransactions = async({ user: { id, role }, body, body: { userId } }, res) => {
-
+e.getTransactions = async({body: { userId } }, res) => {
+  try {
+    const data = []
+    fs.createReadStream('./csv/transactions.csv')
+      .pipe(csv())
+      .on('data', ({id: rowId, userId: rowUserId, amount, timestamp}) => {
+        if(rowUserId == userId){
+          timestamp = new Date(parseInt(timestamp))
+          data.push({id: parseInt(rowId), value: parseInt(amount), timestamp: timestamp.toISOString()})
+        } 
+      })
+      .on('end',() => {
+        res.status(200).send({transactions: data })
+      })
+  } catch (err) {
+    res.error(new CodedError(err.message, ErrorCodes.FS_ERROR), 500)
+  }
 }
 
-e.operate = async({ user: { id, role }, body, body: { userId, amount } }, res) => {
+e.operate = async({ body: { userId, amount } }, res) => {
     try {
         let transactions = []
     
-        fs.createReadStream('./csv/transaction.csv')
+        fs.createReadStream('./csv/transactions.csv')
           .pipe(csv())
           .on('data', (row) => {
             transactions.push({...row})
@@ -57,14 +71,25 @@ e.operate = async({ user: { id, role }, body, body: { userId, amount } }, res) =
             const data = [{ id: transactions.length+1, userId, amount, timestamp: Date.now().toString() }]
     
             csvWriterTransactions
-                .writeRecords(data)
-                .then(()=> {
+              .writeRecords(data)
+              .then(async ()=> {
                 console.log('The CSV file was written successfully')
-                //TODO: UPDATARE IL FILE BALANCE CON I NUOVI AMOUNT
-                    csvWriterBalance
-                    
-                
-                })
+
+                let rows = "id,userId,balance\r\n"
+                fs.createReadStream('./csv/balances.csv')
+                  .pipe(csv())
+                  .on('data', ({id, userId: uId, balance}) => {
+                    if(userId == uId){
+                      balance = parseInt(balance) + amount
+                    }
+                    rows += id.toString() + "," + uId.toString() + "," + balance.toString() + "\r\n"
+                  })
+                  .on('end', () => {
+                    fs.writeFileSync('./csv/balances.csv', rows)
+                    console.log("Finished")
+                    res.sendStatus(200)
+                  })
+              })
           })
       } catch (err) {
         res.error(new CodedError(err.message, ErrorCodes.FS_ERROR), 500)
