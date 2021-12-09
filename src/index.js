@@ -120,7 +120,7 @@ app.all("*", (req, res) => {
   res.error(new CodedError("Resource not found", ErrorCodes.NOT_FOUND), 404)
 })
 
-const port = 3000
+const port = 8000
 
 app.listen(port, () => {
   debug(`api listening on port ${port}`)

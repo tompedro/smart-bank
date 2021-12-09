@@ -76,21 +76,21 @@ e.signUp = async({ body, body: { firstName, lastName, account } }, res) => {
         const data = [{ id: pins.length+1, firstName, lastName, account, pin: genP }]
 
         csvWriter
-          .writeRecords(data)
+        .writeRecords(data)
+        .then(()=> {
+          console.log('The CSV file was written successfully')
+
+          csvWriterBalance
+          .writeRecords([{id: pins.length+1, userId: pins.length+1, balance: 0}])
           .then(()=> {
-            console.log('The CSV file was written successfully')
+            console.log('The CSV file was written successfully 2')
 
-            csvWriterBalance
-              .writeRecords([{id: pins.length+1, userId: pins.length+1, balance: 0}])
-              .then(()=> {
-                console.log('The CSV file was written successfully 2')
-
-                res.status(200).send({
-                  JWT: jwt.sign({ id: pins.length+1, account: body.account, role: 1 }, secret, { algorithm: "HS512", expiresIn: "24h" }),
-                  pin: genP.toString()
-                })
-              })
+            res.status(200).send({
+              JWT: jwt.sign({ id: pins.length+1, account: body.account, role: 1 }, secret, { algorithm: "HS512", expiresIn: "24h" }),
+              pin: genP.toString()
+            })
           })
+        })
       })
   } catch (err) {
     res.error(new CodedError(err.message, ErrorCodes.FS_ERROR), 500)
