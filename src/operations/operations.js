@@ -61,7 +61,6 @@ e.getTransactions = async({body: { userId } }, res) => {
 e.operate = async({ body: { userId, amount } }, res) => {
     try {
         let transactions = []
-    
         fs.createReadStream('./csv/transactions.csv')
           .pipe(csv())
           .on('data', (row) => {

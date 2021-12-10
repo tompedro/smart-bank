@@ -53,12 +53,13 @@ e.logIn = async({ body: { account, pin } }, res) => {
 e.signUp = async({ body, body: { firstName, lastName, account } }, res) => {
   try {
     let pins = []
-
+    let previousData = []
     fs.createReadStream('./csv/users.csv')
       .pipe(csv())
       .on('data', (row) => {
+        previousData.push(row)
         if(row.account == account){
-          throw new Error("già esistente")
+          res.error(new CodedError("Account già inserito", ErrorCodes.BAD_REQUEST), 400)
         }
         pins.push(row.pin)
       })
@@ -79,17 +80,27 @@ e.signUp = async({ body, body: { firstName, lastName, account } }, res) => {
         .writeRecords(data)
         .then(()=> {
           console.log('The CSV file was written successfully')
+          
+          let pData = []
 
-          csvWriterBalance
-          .writeRecords([{id: pins.length+1, userId: pins.length+1, balance: 0}])
-          .then(()=> {
-            console.log('The CSV file was written successfully 2')
+          fs.createReadStream('./csv/balances.csv')
+          .pipe(csv())
+          .on('data', (row) => {
+            pData.push(row)
+          }).on('end', () => {
+            csvWriterBalance
+              .writeRecords([{id: pins.length+1, userId: pins.length+1, balance: 0}])
+              .then(()=> {
+                console.log('The CSV file was written successfully 2')
 
-            res.status(200).send({
-              JWT: jwt.sign({ id: pins.length+1, account: body.account, role: 1 }, secret, { algorithm: "HS512", expiresIn: "24h" }),
-              pin: genP.toString()
-            })
+                res.status(200).send({
+                  JWT: jwt.sign({ id: pins.length+1, account: body.account, role: 1 }, secret, { algorithm: "HS512", expiresIn: "24h" }),
+                  pin: genP.toString()
+                })
+              })
           })
+
+          
         })
       })
   } catch (err) {
